@@ -9,7 +9,6 @@ import com.google.cloud.bigquery.Schema;
 import com.google.cloud.bigquery.StandardSQLTypeName;
 import com.google.cloud.bigquery.StandardTableDefinition;
 import com.google.cloud.bigquery.Table;
-import com.google.cloud.bigquery.TableDefinition;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableInfo;
 import com.google.cloud.bigquery.storage.v1.TableName;
@@ -139,7 +138,7 @@ public class BigQueryDynamicTableSink implements DynamicTableSink {
         StandardTableDefinition.newBuilder().setSchema(schemaBuilder(fieldNames, types)).build();
     if (table == null || !table.exists()) {
       return bigQueryService.create(TableInfo.of(tableId, requiredDefinition));
-    } 
+    }
     // else {
     //   TableDefinition existingDefinition = table.getDefinition();
     //   FieldList existingFieldList = existingDefinition.getSchema().getFields();
