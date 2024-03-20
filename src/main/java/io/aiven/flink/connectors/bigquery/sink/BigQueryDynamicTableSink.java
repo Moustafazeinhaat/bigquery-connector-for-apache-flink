@@ -9,6 +9,7 @@ import com.google.cloud.bigquery.Schema;
 import com.google.cloud.bigquery.StandardSQLTypeName;
 import com.google.cloud.bigquery.StandardTableDefinition;
 import com.google.cloud.bigquery.Table;
+import com.google.cloud.bigquery.TableDefinition;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableInfo;
 import com.google.cloud.bigquery.storage.v1.TableName;
@@ -138,6 +139,11 @@ public class BigQueryDynamicTableSink implements DynamicTableSink {
         StandardTableDefinition.newBuilder().setSchema(schemaBuilder(fieldNames, types)).build();
     if (table == null || !table.exists()) {
       return bigQueryService.create(TableInfo.of(tableId, requiredDefinition));
+    } else {
+      TableDefinition existingDefinition = table.getDefinition();
+      FieldList existingFieldList = existingDefinition.getSchema().getFields();
+      FieldList fieldList = requiredDefinition.getSchema().getFields();
+      validateTableDefinitions(existingFieldList, fieldList, null);
     }
     return table;
   }
@@ -190,7 +196,12 @@ public class BigQueryDynamicTableSink implements DynamicTableSink {
       if (!fieldFromInsert
           .getType()
           .getStandardType()
-          .equals(existingField.getType().getStandardType())) {
+          .equals(existingField.getType().getStandardType()) ||
+              ((LegacySQLTypeName.GEOGRAPHY.equals(existingField.getType())
+              && !StandardSQLTypeName.STRING.equals(fieldFromInsert
+                      .getType()
+                      .getStandardType())
+              ))) {
         throw new ValidationException(
             "Column #"
                 + (i + 1)
