@@ -139,12 +139,6 @@ public class BigQueryDynamicTableSink implements DynamicTableSink {
     if (table == null || !table.exists()) {
       return bigQueryService.create(TableInfo.of(tableId, requiredDefinition));
     }
-    // else {
-    //   TableDefinition existingDefinition = table.getDefinition();
-    //   FieldList existingFieldList = existingDefinition.getSchema().getFields();
-    //   FieldList fieldList = requiredDefinition.getSchema().getFields();
-    //   validateTableDefinitions(existingFieldList, fieldList, null);
-    // }
     return table;
   }
 
