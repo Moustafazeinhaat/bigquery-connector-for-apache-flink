@@ -173,7 +173,9 @@ public abstract class BigQueryWriter implements SinkWriter<RowData> {
       throws Descriptors.DescriptorValidationException, IOException, InterruptedException;
 
   protected abstract void append(JSONArray arr)
-      throws Descriptors.DescriptorValidationException, IOException, InterruptedException,
+      throws Descriptors.DescriptorValidationException,
+          IOException,
+          InterruptedException,
           ExecutionException;
 
   public static class Builder {
