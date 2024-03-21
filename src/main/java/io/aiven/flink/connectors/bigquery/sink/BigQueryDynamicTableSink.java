@@ -193,25 +193,23 @@ public class BigQueryDynamicTableSink implements DynamicTableSink {
                 + fieldFromInsert.getName()
                 + "'");
       }
-//      if (!fieldFromInsert
-//              .getType()
-//              .getStandardType()
-//              .equals(existingField.getType().getStandardType())
-//          || (LegacySQLTypeName.GEOGRAPHY.equals(existingField.getType())
-//              && !StandardSQLTypeName.STRING.equals(
-//                  fieldFromInsert.getType().getStandardType()))) {
-//        throw new ValidationException(
-//            "Column #"
-//                + (i + 1)
-//                + " with name '"
-//                + parentName
-//                + existingField.getName()
-//                + "' has type '"
-//                + existingField.getType().getStandardType()
-//                + "' in BQ while in Flink it has type '"
-//                + fieldFromInsert.getType().getStandardType()
-//                + "'");
-//      }
+      if (!fieldFromInsert
+              .getType()
+              .getStandardType()
+              .equals(existingField.getType().getStandardType())
+          && !LegacySQLTypeName.GEOGRAPHY.equals(fieldFromInsert.getType())) {
+        throw new ValidationException(
+            "Column #"
+                + (i + 1)
+                + " with name '"
+                + parentName
+                + existingField.getName()
+                + "' has type '"
+                + existingField.getType().getStandardType()
+                + "' in BQ while in Flink it has type '"
+                + fieldFromInsert.getType().getStandardType()
+                + "'");
+      }
       if (existingFieldMode != Field.Mode.NULLABLE
           && fieldFromInsert.getMode() == Field.Mode.NULLABLE) {
         if (!parentName.isBlank()) {
