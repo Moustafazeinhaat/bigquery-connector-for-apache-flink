@@ -2,6 +2,7 @@ package io.aiven.flink.connectors.bigquery.sink;
 
 import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.core.FixedExecutorProvider;
+import com.google.cloud.bigquery.StandardSQLTypeName;
 import com.google.cloud.bigquery.storage.v1.BigQueryWriteClient;
 import com.google.cloud.bigquery.storage.v1.BigQueryWriteSettings;
 import com.google.cloud.bigquery.storage.v1.CreateWriteStreamRequest;
@@ -19,8 +20,9 @@ public class BigQueryStreamingAtLeastOnceSinkWriter extends BigQueryWriter {
   protected BigQueryStreamingAtLeastOnceSinkWriter(
       @Nonnull String[] fieldNames,
       @Nonnull LogicalType[] fieldTypes,
+      @Nonnull StandardSQLTypeName[] standardSQLTypes,
       @Nonnull BigQueryConnectionOptions options) {
-    super(fieldNames, fieldTypes, options);
+    super(fieldNames, fieldTypes, standardSQLTypes, options);
   }
 
   @Override

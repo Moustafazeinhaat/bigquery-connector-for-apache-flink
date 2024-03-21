@@ -12,6 +12,7 @@ import com.google.api.core.ApiFutures;
 import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.bigquery.BigQueryException;
+import com.google.cloud.bigquery.StandardSQLTypeName;
 import com.google.cloud.bigquery.storage.v1.AppendRowsResponse;
 import com.google.cloud.bigquery.storage.v1.BigQueryWriteClient;
 import com.google.cloud.bigquery.storage.v1.BigQueryWriteSettings;
@@ -26,7 +27,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -45,6 +45,7 @@ import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 import org.apache.flink.util.Preconditions;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.locationtech.jts.io.WKTReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.threeten.bp.Duration;
@@ -52,6 +53,8 @@ import org.threeten.bp.Duration;
 /** Abstract class of BigQuery output format. */
 public abstract class BigQueryWriter implements SinkWriter<RowData> {
   private static final Logger LOG = LoggerFactory.getLogger(BigQueryWriter.class);
+  private final WKTReader wktReader = new WKTReader();
+
   private static final ImmutableList<Status.Code> RETRIABLE_ERROR_CODES =
       ImmutableList.of(
           Status.Code.INTERNAL,
@@ -64,6 +67,8 @@ public abstract class BigQueryWriter implements SinkWriter<RowData> {
   protected final String[] fieldNames;
 
   protected final LogicalType[] fieldTypes;
+
+  private final StandardSQLTypeName[] standardSQLTypes;
 
   protected final BigQueryConnectionOptions options;
   protected transient BigQueryWriteClient client;
@@ -82,9 +87,11 @@ public abstract class BigQueryWriter implements SinkWriter<RowData> {
   public BigQueryWriter(
       @Nonnull String[] fieldNames,
       @Nonnull LogicalType[] fieldTypes,
+      @Nonnull StandardSQLTypeName[] standardSQLTypes,
       @Nonnull BigQueryConnectionOptions options) {
     this.fieldNames = Preconditions.checkNotNull(fieldNames);
     this.fieldTypes = Preconditions.checkNotNull(fieldTypes);
+    this.standardSQLTypes = Preconditions.checkNotNull(standardSQLTypes);
     this.options = Preconditions.checkNotNull(options);
     FixedCredentialsProvider creds = FixedCredentialsProvider.create(options.getCredentials());
     inflightRequestCount = new Phaser(1);
@@ -202,17 +209,6 @@ public abstract class BigQueryWriter implements SinkWriter<RowData> {
       this.options = options;
       return this;
     }
-
-    public BigQueryWriter build() {
-      Preconditions.checkNotNull(fieldNames);
-      Preconditions.checkNotNull(fieldDataTypes);
-      LogicalType[] logicalTypes =
-          Arrays.stream(fieldDataTypes).map(DataType::getLogicalType).toArray(LogicalType[]::new);
-      if (options.getDeliveryGuarantee() == DeliveryGuarantee.AT_LEAST_ONCE) {
-        return new BigQueryStreamingAtLeastOnceSinkWriter(fieldNames, logicalTypes, options);
-      }
-      return new BigQueryStreamingExactlyOnceSinkWriter(fieldNames, logicalTypes, options);
-    }
   }
 
   private Object retrieveValue(RowData record, LogicalType type, int i) {
@@ -237,8 +233,15 @@ public abstract class BigQueryWriter implements SinkWriter<RowData> {
       case INTEGER:
         return record.getInt(i);
       case CHAR:
-      case VARCHAR:
+      case VARCHAR: {
+        if(standardSQLTypes[i].equals(StandardSQLTypeName.GEOGRAPHY))
+           try {
+             wktReader.read(record.getString(i).toString());
+           }catch (Exception e) {
+             throw new RuntimeException("invalid WKT: " + record.getString(i).toString());
+           }
         return record.getString(i).toString();
+      }
       case DATE:
         return LocalDate.ofEpochDay(record.getInt(i)).format(ISO_LOCAL_DATE);
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:

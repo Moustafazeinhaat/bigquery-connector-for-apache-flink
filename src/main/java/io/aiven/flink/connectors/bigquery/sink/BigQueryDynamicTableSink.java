@@ -13,14 +13,9 @@ import com.google.cloud.bigquery.TableDefinition;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableInfo;
 import com.google.cloud.bigquery.storage.v1.TableName;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+
+import java.util.*;
+
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.CatalogTable;
@@ -98,14 +93,17 @@ public class BigQueryDynamicTableSink implements DynamicTableSink {
             .filter(Column::isPhysical)
             .map(Column::getDataType)
             .toArray(DataType[]::new);
-
+    StandardSQLTypeName[] standardSQLTypes = null;
     if (options.isCreateIfNotExists()) {
-      ensureTableExists(fieldNames, fieldTypes, options);
+      Table table = ensureTableExists(fieldNames, fieldTypes, options);
+      standardSQLTypes =
+              Objects.requireNonNull(table.getDefinition().getSchema())
+                      .getFields().stream().map(field -> field.getType().getStandardType()).toArray(StandardSQLTypeName[]::new);
     }
 
     LogicalType[] logicalTypes =
         Arrays.stream(fieldTypes).map(DataType::getLogicalType).toArray(LogicalType[]::new);
-    return SinkV2Provider.of(new BigQuerySink(fieldNames, logicalTypes, options));
+    return SinkV2Provider.of(new BigQuerySink(fieldNames, logicalTypes, standardSQLTypes, options));
   }
 
   @Override
@@ -197,7 +195,7 @@ public class BigQueryDynamicTableSink implements DynamicTableSink {
               .getType()
               .getStandardType()
               .equals(existingField.getType().getStandardType())
-          && !LegacySQLTypeName.GEOGRAPHY.equals(existingField.getType())) {
+          && !StandardSQLTypeName.GEOGRAPHY.equals(existingField.getType().getStandardType())) {
         throw new ValidationException(
             "Column #"
                 + (i + 1)

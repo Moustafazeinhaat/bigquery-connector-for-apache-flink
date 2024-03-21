@@ -3,6 +3,7 @@ package io.aiven.flink.connectors.bigquery.sink;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.batching.FlowControlSettings;
+import com.google.cloud.bigquery.StandardSQLTypeName;
 import com.google.cloud.bigquery.storage.v1.AppendRowsResponse;
 import com.google.cloud.bigquery.storage.v1.BigQueryWriteClient;
 import com.google.cloud.bigquery.storage.v1.CreateWriteStreamRequest;
@@ -23,8 +24,9 @@ public class BigQueryStreamingExactlyOnceSinkWriter extends BigQueryWriter {
   protected BigQueryStreamingExactlyOnceSinkWriter(
       @Nonnull String[] fieldNames,
       @Nonnull LogicalType[] fieldTypes,
+      @Nonnull StandardSQLTypeName[] standardSQLTypes,
       @Nonnull BigQueryConnectionOptions options) {
-    super(fieldNames, fieldTypes, options);
+    super(fieldNames, fieldTypes, standardSQLTypes, options);
     inflightRequestCount = new Phaser(1);
   }
 
