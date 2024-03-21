@@ -234,12 +234,13 @@ public abstract class BigQueryWriter implements SinkWriter<RowData> {
         return record.getInt(i);
       case CHAR:
       case VARCHAR: {
-        if(StandardSQLTypeName.GEOGRAPHY.equals(standardSQLTypes[i]))
-           try {
-             wktReader.read(record.getString(i).toString());
-           }catch (Exception e) {
-             throw new RuntimeException("invalid WKT: " + record.getString(i).toString());
-           }
+        if(i < standardSQLTypes.length &&
+                StandardSQLTypeName.GEOGRAPHY.equals(standardSQLTypes[i]))
+          try {
+            wktReader.read(record.getString(i).toString());
+          } catch (Exception e) {
+            throw new RuntimeException("invalid WKT: " + record.getString(i).toString());
+          }
         return record.getString(i).toString();
       }
       case DATE:
