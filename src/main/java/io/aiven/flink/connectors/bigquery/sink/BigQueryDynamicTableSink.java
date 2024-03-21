@@ -197,7 +197,7 @@ public class BigQueryDynamicTableSink implements DynamicTableSink {
               .getType()
               .getStandardType()
               .equals(existingField.getType().getStandardType())
-          && !LegacySQLTypeName.GEOGRAPHY.equals(fieldFromInsert.getType())) {
+          && !LegacySQLTypeName.GEOGRAPHY.equals(existingField.getType())) {
         throw new ValidationException(
             "Column #"
                 + (i + 1)
