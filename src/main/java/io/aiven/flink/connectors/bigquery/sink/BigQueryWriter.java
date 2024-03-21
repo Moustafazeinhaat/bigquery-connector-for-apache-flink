@@ -234,7 +234,7 @@ public abstract class BigQueryWriter implements SinkWriter<RowData> {
         return record.getInt(i);
       case CHAR:
       case VARCHAR: {
-        if(standardSQLTypes[i].equals(StandardSQLTypeName.GEOGRAPHY))
+        if(StandardSQLTypeName.GEOGRAPHY.equals(standardSQLTypes[i]))
            try {
              wktReader.read(record.getString(i).toString());
            }catch (Exception e) {
