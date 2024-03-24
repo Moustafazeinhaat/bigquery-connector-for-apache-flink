@@ -263,6 +263,10 @@ public abstract class BigQueryWriter implements SinkWriter<RowData> {
             .format(ISO_LOCAL_DATE_TIME);
       case ARRAY:
         return new JSONArray(retrieveFromArray(record.getArray(i), (ArrayType) type));
+      case MULTISET: {
+        LOG.info("MULTISET Value: {}", record);
+        return new JSONObject(record.getMap(i));
+      }
       case ROW:
         return retrieveFromRow(record.getRow(i, ((RowType) type).getFieldCount()), (RowType) type);
       default:
