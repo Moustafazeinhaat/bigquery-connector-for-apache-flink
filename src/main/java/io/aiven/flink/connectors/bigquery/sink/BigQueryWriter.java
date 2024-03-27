@@ -245,14 +245,15 @@ public abstract class BigQueryWriter implements SinkWriter<RowData> {
           } catch (Exception e) {
             throw new RuntimeException("invalid WKT: " + record.getString(i).toString());
           }
-        } else if (i < standardSQLTypes.length &&
-                StandardSQLTypeName.JSON.equals(standardSQLTypes[i])) {
-          try {
-            return objectMapper.readValue(record.getString(i).toString(), Map.class);
-          } catch (Exception e) {
-            throw new RuntimeException("invalid Json: " + record.getString(i).toString());
-          }
         }
+//        else if (i < standardSQLTypes.length &&
+//                StandardSQLTypeName.JSON.equals(standardSQLTypes[i])) {
+//          try {
+//            return objectMapper.readValue(record.getString(i).toString(), Map.class);
+//          } catch (Exception e) {
+//            throw new RuntimeException("invalid Json: " + record.getString(i).toString());
+//          }
+        //}
         return record.getString(i).toString();
       }
       case DATE:
