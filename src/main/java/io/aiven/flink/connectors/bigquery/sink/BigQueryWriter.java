@@ -35,6 +35,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import org.apache.flink.api.connector.sink2.SinkWriter;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.json.JsonMapper;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.flink.table.data.ArrayData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.DataType;
@@ -53,6 +56,7 @@ import org.threeten.bp.Duration;
 /** Abstract class of BigQuery output format. */
 public abstract class BigQueryWriter implements SinkWriter<RowData> {
   private static final Logger LOG = LoggerFactory.getLogger(BigQueryWriter.class);
+  private static final ObjectMapper objectMapper =  JsonMapper.builder().build().registerModule(new JavaTimeModule());
   private final WKTReader wktReader = new WKTReader();
 
   private static final ImmutableList<Status.Code> RETRIABLE_ERROR_CODES =
@@ -235,12 +239,20 @@ public abstract class BigQueryWriter implements SinkWriter<RowData> {
       case CHAR:
       case VARCHAR: {
         if(i < standardSQLTypes.length &&
-                StandardSQLTypeName.GEOGRAPHY.equals(standardSQLTypes[i]))
+                StandardSQLTypeName.GEOGRAPHY.equals(standardSQLTypes[i])) {
           try {
             wktReader.read(record.getString(i).toString());
           } catch (Exception e) {
             throw new RuntimeException("invalid WKT: " + record.getString(i).toString());
           }
+        } else if (i < standardSQLTypes.length &&
+                StandardSQLTypeName.JSON.equals(standardSQLTypes[i])) {
+          try {
+            return objectMapper.readValue(record.getString(i).toString(), Map.class);
+          } catch (Exception e) {
+            throw new RuntimeException("invalid Json: " + record.getString(i).toString());
+          }
+        }
         return record.getString(i).toString();
       }
       case DATE:
