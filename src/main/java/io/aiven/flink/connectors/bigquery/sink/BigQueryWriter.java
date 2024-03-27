@@ -35,9 +35,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import org.apache.flink.api.connector.sink2.SinkWriter;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.json.JsonMapper;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.flink.table.data.ArrayData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.DataType;
@@ -56,7 +53,6 @@ import org.threeten.bp.Duration;
 /** Abstract class of BigQuery output format. */
 public abstract class BigQueryWriter implements SinkWriter<RowData> {
   private static final Logger LOG = LoggerFactory.getLogger(BigQueryWriter.class);
-  private static final ObjectMapper objectMapper =  JsonMapper.builder().build().registerModule(new JavaTimeModule());
   private final WKTReader wktReader = new WKTReader();
 
   private static final ImmutableList<Status.Code> RETRIABLE_ERROR_CODES =
